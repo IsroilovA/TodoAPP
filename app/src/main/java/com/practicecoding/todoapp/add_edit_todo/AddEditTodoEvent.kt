@@ -4,4 +4,5 @@ sealed class AddEditTodoEvent{
     object OnSaveTodoClick: AddEditTodoEvent()
     data class SetTitle(val title: String): AddEditTodoEvent()
     data class SetDescription(val description: String): AddEditTodoEvent()
+
 }

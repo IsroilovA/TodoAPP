@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+//dao for working with database
 @Dao
 interface TodoDao {
     @Upsert

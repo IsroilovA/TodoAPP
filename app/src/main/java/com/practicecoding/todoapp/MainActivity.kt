@@ -4,15 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
@@ -27,7 +20,7 @@ import com.practicecoding.todoapp.todo_list.TodoListViewModel
 import com.practicecoding.todoapp.ui.theme.ToDoAppTheme
 
 class MainActivity : ComponentActivity() {
-
+    //instance of database
     private val db by lazy {
         Room.databaseBuilder(
             applicationContext,
@@ -35,7 +28,8 @@ class MainActivity : ComponentActivity() {
             "contacts.db"
         ).build()
     }
-    private val viewModelList by viewModels<TodoListViewModel>(
+    //instance of TodoListViewModel
+    private val viewModelTodoList by viewModels<TodoListViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -44,8 +38,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     )
-
-    private val viewModelAddEdit by viewModels<AddEditTodoViewModel>(
+    //instance of AddEditTodoViewModel
+    private val viewModelAddEditTodo by viewModels<AddEditTodoViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -59,9 +53,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ToDoAppTheme {
-                val stateAddEditTodoScreen by viewModelAddEdit.state.collectAsState()
-                val stateTodoListScreen by viewModelList.todoState.collectAsState()
+                //states of screens
+                val stateAddEditTodoScreen by viewModelAddEditTodo.state.collectAsState()
+                val stateTodoListScreen by viewModelTodoList.todoState.collectAsState()
+                //navController instance
                 val navController = rememberNavController()
+                viewModelTodoList.navController = navController
+                viewModelAddEditTodo.navController = navController
                 NavHost(
                     navController = navController,
                     startDestination = Routes.TodoListScreen.route
@@ -69,13 +67,11 @@ class MainActivity : ComponentActivity() {
                     composable(route = Routes.TodoListScreen.route) {
                         TodoListScreen(
                             state = stateTodoListScreen,
-                            onNavigation = { navController.navigate(Routes.AddEditScreen.route) },
-                            onEvent = viewModelList::onEvent)
+                            onEvent = viewModelTodoList::onEvent)
                     }
-                    composable(route = Routes.AddEditScreen.route) {
+                    composable(route = Routes.AddEditTodoScreen.route) {
                         AddEditTodoScreen(
-                            onEvent = viewModelAddEdit::onEvent,
-                            PopBackStack = { navController.popBackStack() },
+                            onEvent = viewModelAddEditTodo::onEvent,
                             state = stateAddEditTodoScreen)
                     }
                 }

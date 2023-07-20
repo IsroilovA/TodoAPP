@@ -14,16 +14,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.Navigation
-import com.practicecoding.todoapp.UiEvent
 import com.practicecoding.todoapp.TodoState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoListScreen(
     state: TodoState,
-    onNavigation: () -> Unit,
     onEvent: (TodoListEvent) -> Unit
 ) {
 
@@ -31,7 +27,7 @@ fun TodoListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onNavigation
+                    onEvent(TodoListEvent.AddTodo)
                 }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add todo")
             }

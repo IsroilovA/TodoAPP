@@ -19,14 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.practicecoding.todoapp.TodoState
-import com.practicecoding.todoapp.UiEvent
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditTodoScreen(
     onEvent: (AddEditTodoEvent) -> Unit,
-    PopBackStack: () -> Unit,
     state: TodoState
 ) {
     Scaffold(
@@ -36,7 +34,6 @@ fun AddEditTodoScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 onEvent(AddEditTodoEvent.OnSaveTodoClick)
-                PopBackStack
             }) {
                 Icon(imageVector = Icons.Default.Check, contentDescription = "Save")
             }
