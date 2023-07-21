@@ -18,6 +18,7 @@ import com.practicecoding.todoapp.data.TodoDatabase
 import com.practicecoding.todoapp.todo_list.TodoListScreen
 import com.practicecoding.todoapp.todo_list.TodoListViewModel
 import com.practicecoding.todoapp.ui.theme.ToDoAppTheme
+import com.practicecoding.todoapp.util.Routes
 
 class MainActivity : ComponentActivity() {
     //instance of database
@@ -58,8 +59,6 @@ class MainActivity : ComponentActivity() {
                 val stateTodoListScreen by viewModelTodoList.todoState.collectAsState()
                 //navController instance
                 val navController = rememberNavController()
-                viewModelTodoList.navController = navController
-                viewModelAddEditTodo.navController = navController
                 NavHost(
                     navController = navController,
                     startDestination = Routes.TodoListScreen.route
@@ -67,12 +66,16 @@ class MainActivity : ComponentActivity() {
                     composable(route = Routes.TodoListScreen.route) {
                         TodoListScreen(
                             state = stateTodoListScreen,
-                            onEvent = viewModelTodoList::onEvent)
+                            viewModel = viewModelTodoList,
+                            onNavigate = { navController.navigate(it.route) }
+                        )
                     }
                     composable(route = Routes.AddEditTodoScreen.route) {
                         AddEditTodoScreen(
-                            onEvent = viewModelAddEditTodo::onEvent,
-                            state = stateAddEditTodoScreen)
+                            state = stateAddEditTodoScreen,
+                            viewModel = viewModelAddEditTodo,
+                            onPopBackStack = {navController.popBackStack()}
+                        )
                     }
                 }
             }

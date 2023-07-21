@@ -11,23 +11,52 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.practicecoding.todoapp.TodoState
+import com.practicecoding.todoapp.util.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoListScreen(
     state: TodoState,
-    onEvent: (TodoListEvent) -> Unit
+    onNavigate: (UiEvent.Navigate) -> Unit,
+    viewModel: TodoListViewModel
 ) {
-
+    val snackbarHostState = remember{ SnackbarHostState() }
+    LaunchedEffect(key1 = true){
+        viewModel.uiEvent.collect{event->
+            when(event){
+                is UiEvent.ShowSnackbar -> {
+                    val result = snackbarHostState.showSnackbar(
+                        event.message,
+                        actionLabel = event.action
+                    )
+                    if(result == SnackbarResult.ActionPerformed){
+                        viewModel.onEvent(TodoListEvent.UndoDelete)
+                    }
+                }
+                is UiEvent.Navigate -> {
+                    onNavigate(event)
+                }
+                else -> Unit
+            }
+        }
+    }
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onEvent(TodoListEvent.AddTodo)
+                    viewModel.onEvent(TodoListEvent.AddTodo)
                 }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add todo")
             }
@@ -38,10 +67,10 @@ fun TodoListScreen(
             contentPadding = padding,
             modifier = Modifier.fillMaxSize()
         ){
-            items(state.todos){todo->
+            items(state.todos.asReversed()){todo->
                 TodoItem(
                     todo = todo,
-                    onEvent = onEvent,
+                    onEvent = viewModel::onEvent,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)

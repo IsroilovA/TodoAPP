@@ -1,4 +1,4 @@
-package com.practicecoding.todoapp
+package com.practicecoding.todoapp.util
 
 sealed class Routes(val route: String) {
     object TodoListScreen: Routes("Todo_list")

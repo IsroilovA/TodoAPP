@@ -13,27 +13,48 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.practicecoding.todoapp.TodoState
+import com.practicecoding.todoapp.util.UiEvent
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditTodoScreen(
-    onEvent: (AddEditTodoEvent) -> Unit,
-    state: TodoState
+    state: TodoState,
+    viewModel: AddEditTodoViewModel,
+    onPopBackStack: (UiEvent.PopBackStack) -> Unit,
 ) {
+    val snackbarHostState = remember{ SnackbarHostState() }
+    LaunchedEffect(key1 = true){
+        viewModel.uiEvent.collect{event->
+            when(event){
+                is UiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+                is UiEvent.PopBackStack -> onPopBackStack(event)
+                else -> Unit
+            }
+        }
+    }
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                onEvent(AddEditTodoEvent.OnSaveTodoClick)
+                viewModel.onEvent(AddEditTodoEvent.OnSaveTodoClick)
             }) {
                 Icon(imageVector = Icons.Default.Check, contentDescription = "Save")
             }
@@ -45,18 +66,19 @@ fun AddEditTodoScreen(
             TextField(
                 value = state.title,
                 onValueChange = {
-                    onEvent(AddEditTodoEvent.SetTitle(it))
+                    viewModel.onEvent(AddEditTodoEvent.SetTitle(it))
                 },
                 placeholder = {
                     Text(text = "Title")
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
             Spacer(modifier = Modifier.height(8.dp))
             TextField(
                 value = state.description,
                 onValueChange = {
-                    onEvent(AddEditTodoEvent.SetDescription(it))
+                    viewModel.onEvent(AddEditTodoEvent.SetDescription(it))
                 },
                 placeholder = {
                     Text(text = "Description")
