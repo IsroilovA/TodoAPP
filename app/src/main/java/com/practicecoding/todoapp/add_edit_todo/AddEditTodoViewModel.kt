@@ -1,11 +1,13 @@
 package com.practicecoding.todoapp.add_edit_todo
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicecoding.todoapp.TodoState
 import com.practicecoding.todoapp.util.UiEvent
 import com.practicecoding.todoapp.data.Todo
-import com.practicecoding.todoapp.data.TodoDao
+import com.practicecoding.todoapp.data.TodoRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,18 +15,34 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AddEditTodoViewModel(
-    private val dao: TodoDao
+@HiltViewModel
+class AddEditTodoViewModel @Inject constructor(
+    private val repository: TodoRepository,
+    savedStateHandle: SavedStateHandle
 ):ViewModel() {
     //states
     private val _state = MutableStateFlow(TodoState())
     val state = _state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TodoState())
     private val _uiEvent = Channel<UiEvent>()
+    private val userId:Int? = savedStateHandle["todoId"]
     val uiEvent = _uiEvent.receiveAsFlow()
     fun onEvent(event: AddEditTodoEvent) {
         when (event) {
             AddEditTodoEvent.OnSaveTodoClick -> {
+                if (userId != -1){
+                    viewModelScope.launch {
+                        val todo = userId?.let { repository.getTodoById(it) }
+                        if (todo != null) {
+                            _state.update { it.copy(
+                                title = todo.title,
+                                description = todo.description,
+                                isDone = todo.isDone
+                            ) }
+                        }
+                    }
+                }
                 val title = state.value.title
                 val description = state.value.description
                 val isDone = state.value.isDone
@@ -42,7 +60,7 @@ class AddEditTodoViewModel(
                 )
                 //insert into database
                 viewModelScope.launch {
-                    dao.upsertTodo(todo)
+                    repository.upsertTodo(todo)
                 }
                 //clear states
                 _state.update {

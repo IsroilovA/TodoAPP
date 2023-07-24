@@ -19,20 +19,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.practicecoding.todoapp.TodoState
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.practicecoding.todoapp.util.UiEvent
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditTodoScreen(
-    state: TodoState,
-    viewModel: AddEditTodoViewModel,
     onPopBackStack: (UiEvent.PopBackStack) -> Unit,
+    viewModel: AddEditTodoViewModel = hiltViewModel(),
 ) {
+    val state by viewModel.state.collectAsState()
     val snackbarHostState = remember{ SnackbarHostState() }
     LaunchedEffect(key1 = true){
         viewModel.uiEvent.collect{event->
