@@ -31,7 +31,7 @@ fun TodoListScreen(
     onNavigate: (UiEvent.Navigate) -> Unit,
     viewModel: TodoListViewModel = hiltViewModel()
 ) {
-    val todos by viewModel.todoState.collectAsState()
+    val todos by viewModel.todos.collectAsState(initial = emptyList())
     val snackbarHostState = remember{ SnackbarHostState() }
     LaunchedEffect(key1 = true){
         viewModel.uiEvent.collect{event->
@@ -70,7 +70,7 @@ fun TodoListScreen(
             contentPadding = padding,
             modifier = Modifier.fillMaxSize()
         ){
-            items(todos.todos.asReversed()){todo->
+            items(todos.asReversed()){todo->
                 TodoItem(
                     todo = todo,
                     onEvent = viewModel::onEvent,

@@ -1,19 +1,17 @@
 package com.practicecoding.todoapp.add_edit_todo
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicecoding.todoapp.TodoState
 import com.practicecoding.todoapp.util.UiEvent
 import com.practicecoding.todoapp.data.Todo
 import com.practicecoding.todoapp.data.TodoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,29 +21,31 @@ class AddEditTodoViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ):ViewModel() {
     //states
-    private val _state = MutableStateFlow(TodoState())
-    val state = _state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TodoState())
+    var todo by mutableStateOf<Todo?>(null)
+        private set
+    var title by mutableStateOf("")
+        private set
+    var description by mutableStateOf("")
+        private set
+
+    //one time ui events
     private val _uiEvent = Channel<UiEvent>()
-    private val userId:Int? = savedStateHandle["todoId"]
     val uiEvent = _uiEvent.receiveAsFlow()
+    init {
+        val todoId = savedStateHandle.get<Int>("todoId")!!
+        if (todoId != -1) {
+            viewModelScope.launch {
+                repository.getTodoById(todoId)?.let { todo ->
+                    title = todo.title
+                    description = todo.description ?: ""
+                    this@AddEditTodoViewModel.todo = todo
+                }
+            }
+        }
+    }
     fun onEvent(event: AddEditTodoEvent) {
         when (event) {
             AddEditTodoEvent.OnSaveTodoClick -> {
-                if (userId != -1){
-                    viewModelScope.launch {
-                        val todo = userId?.let { repository.getTodoById(it) }
-                        if (todo != null) {
-                            _state.update { it.copy(
-                                title = todo.title,
-                                description = todo.description,
-                                isDone = todo.isDone
-                            ) }
-                        }
-                    }
-                }
-                val title = state.value.title
-                val description = state.value.description
-                val isDone = state.value.isDone
                 //validate user input
                 if (title.isBlank()) {
                     viewModelScope.launch {
@@ -53,21 +53,15 @@ class AddEditTodoViewModel @Inject constructor(
                     }
                     return
                 }
-                val todo = Todo(
-                    title = title,
-                    description = description,
-                    isDone = isDone
-                )
                 //insert into database
                 viewModelScope.launch {
-                    repository.upsertTodo(todo)
-                }
-                //clear states
-                _state.update {
-                    it.copy(
-                        title = "",
-                        description = "",
-                        isDone = false
+                    repository.upsertTodo(
+                        Todo(
+                            title = title,
+                            description = description,
+                            isDone = todo?.isDone ?: false,
+                            id = todo?.id
+                        )
                     )
                 }
                 viewModelScope.launch{
@@ -75,14 +69,10 @@ class AddEditTodoViewModel @Inject constructor(
                 }
             }
             is AddEditTodoEvent.SetDescription -> {
-                _state.update { it.copy(
-                    description = event.description
-                ) }
+                description = event.description
             }
             is AddEditTodoEvent.SetTitle -> {
-                _state.update { it.copy(
-                    title = event.title
-                ) }
+                title = event.title
             }
         }
     }

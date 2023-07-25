@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
                     composable(route = Routes.TodoListScreen.route) {
                         TodoListScreen(
                             onNavigate = { navController.navigate(it.route) },
-                            todoListViewModel
                         )
                     }
                     composable(
@@ -47,8 +46,7 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         AddEditTodoScreen(
-                            onPopBackStack = {navController.popBackStack()},
-                            addEditTodoViewModel
+                            onPopBackStack = {navController.popBackStack()}
                         )
                     }
                 }
